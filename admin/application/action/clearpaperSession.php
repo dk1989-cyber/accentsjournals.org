@@ -1,0 +1,19 @@
+<?php
+ob_start();
+session_start();
+if(isset($_SESSION["id"])){
+    unset($_SESSION["PAPER_JID"]);
+    unset($_SESSION["PAPER_J"]);
+    unset($_SESSION["PAPER_ISSUID"]);
+    unset($_SESSION["PAPER_I"]);
+    unset($_SESSION["PAPER_DOI"]);
+    unset($_SESSION["PAPER_MONTH"]);
+    unset($_SESSION["PAPER_M"]);
+    unset($_SESSION["PAPER_JNAME"]);
+    unset($_SESSION["PAPER_YEAR"]);
+    unset($_SESSION["PAPER_VOLUME"]);
+    unset($_SESSION["PAPER_ISSUE"]);
+    unset($_SESSION["PAPER_MODE"]);
+}
+
+?>

@@ -1,0 +1,230 @@
+<?php
+include('../config/session_config.php');
+include('../config/db_config.php');
+require 'PHPMailer/PHPMailerAutoload.php';
+require('fpdf/fpdf.php');
+//header("Access-Control-Allow-Origin: *");
+
+extract($_REQUEST);
+
+//print_r($_REQUEST);
+
+
+$mid=$_SESSION["uchat"];
+
+
+$name="Danish";
+$pr="<ul>
+	<li>prererer1</li>
+	<li>prererer2</li>
+	<li>prererer3</li>
+	<li>prererer4</li>
+	</ul>";
+
+
+
+
+class PDF extends FPDF
+{
+ 
+ function Header()
+{
+  extract($_REQUEST);
+	//print_r($_REQUEST);
+	 $this->SetFont('Arial','B',12);
+	
+	 //$this->SetY(12);
+  $this->Cell(55,5,"Dr. ".$spname,0,1,'L');
+   $this->SetFont('Arial','I',12);
+   $this->Cell(55,5,$sp,0,1,'L');
+  
+    $this->Image('ayur.jpg',80,10,30);
+    // Arial bold 15
+   
+    // Move to the right
+     //$this->SetX(80);
+	 $this->SetY(35);
+    // Title
+	 $this->SetFont('Arial','B',12);
+    $this->Cell(180,10,'BHARDWAJ AYURVEDIC HEALTHCARE',0,1,'C');
+	 $this->Line(0, 45, 210, 45);
+    // Line break
+    $this->Ln(4);
+}
+
+
+}
+
+
+  
+
+
+
+
+
+// Instanciation of inherited class
+
+$pdf=new PDF();
+
+    
+
+
+
+
+
+$date=date('d-m-y');
+
+$pdf->AliasNbPages();
+$pdf->AddPage();
+$pdf->SetFont('Times','',12);
+
+	
+	
+	
+	
+	
+	
+	//first line
+	
+	$pdf->Cell(30,10,"NAME",0,0,'L');
+	$pdf->Cell(55,10,"$pname",0,0,'L');
+	
+	  //$pdf->Cell(40); 
+	
+	$pdf->Cell(20,10,"AGE",0,0,'C');
+	
+	$pdf->Cell(20,10,"$page",0,0,'L');
+	
+	$pdf->Cell(40,10,"GENDER",0,0,'R');
+	
+	$pdf->Cell(30,10,"$pgen",0,1,'L');
+	
+	
+	
+		//second line
+	
+	
+	$pdf->Cell(30,10,"DIESEASE",0,0,'L');
+	$pdf->Cell(55,10,"$pdiseas",0,0,'L');
+	
+	//$pdf->Cell(40); 
+	
+	$pdf->Cell(20,10,"DATE",0,0,'C');
+	
+	$pdf->Cell(20,10,"$pdate",0,0,'L');
+	
+	
+	
+	$pdf->Cell(40,10,"CONTACT",0,0,'R');
+	
+	$pdf->Cell(30,10,"$pcon",0,1,'L');
+	
+	
+	
+	$pdf->Cell(30,10,"ADDRESS",0,0,'L');
+	$pdf->Cell(165,10,"$padd",0,0,'L');
+	
+	
+	
+	//$pdf->Ln(15);
+	  
+	//$pdf->Cell(0);
+	  
+
+
+
+
+
+$pdf->Image('Rx.png',15,85,20);
+   
+    $pdf->Ln(5);
+	
+	$pdf->Cell(30);
+	
+	
+	 $pdf->Cell(90,80,"$priscrip",0,1,'L');  
+	
+  
+
+//$pdf->WriteHTML("priscription write here");
+
+
+
+
+//$filename = "example.pdf";
+
+// encode data (puts attachment in proper format)
+//$pdfdoc = $pdf->Output("", "S");
+//$attachment = chunk_split(base64_encode($pdfdoc));
+
+
+
+$filename="../priscription/".$mid.date('ymdhs')."priscription.pdf";
+//rest of pdf code here
+
+$pdf->Output($filename);
+
+
+//die();
+
+$mail = new PHPMailer;
+
+$mail->SMTPDebug = 3;                               // Enable verbose debug output
+
+$mail->isSMTP();                                      // Set mailer to use SMTP
+$mail->Host = 'smtp.gmail.com';  // Specify main and backup SMTP servers
+$mail->SMTPAuth = true;                               // Enable SMTP authentication
+$mail->Username = 'danishkhan989@gmail.com';                 // SMTP username
+$mail->Password = 'dk@156336500';                           // SMTP password
+$mail->SMTPSecure = 'tls';                            // Enable TLS encryption, `ssl` also accepted
+$mail->Port = 587;                                    // TCP port to connect to
+
+$mail->setFrom('danishkhan989@gmail.com', 'Mailer');
+$mail->addAddress('danishkhan989@gmail.com', 'Joe User');     // Add a recipient
+//$mail->addAddress('ellen@example.com');               // Name is optional
+//$mail->addReplyTo('info@example.com', 'Information');
+//$mail->addCC('cc@example.com');
+//$mail->addBCC('bcc@example.com');
+
+
+
+
+$mail->addAttachment($filename);         // Add attachments
+//$mail->addAttachment('/tmp/image.jpg', 'new.jpg');    // Optional name
+$mail->isHTML(true);                                  // Set email format to HTML
+
+$mail->Subject = 'Priscription';
+$mail->Body    = 'This is yor priscription reagarding'."  ".$pdiseas;
+$mail->AltBody = '';
+
+if(!$mail->send()) {
+    echo 'Message could not be sent.';
+    echo 'Mailer Error: ' . $mail->ErrorInfo;
+} else {
+   
+   
+ 
+  //echo 'Message has been sent';
+
+$sql="insert into priscription values('','$mid','$pdiseas','$pdate','$filename')";
+
+
+
+if(mysqli_query($con,$sql))
+{
+	
+echo "sucess";	
+}
+else
+{
+	
+	echo mysqli_error($con);
+	
+}
+
+}
+
+
+
+
+?>
