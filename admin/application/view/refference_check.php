@@ -22,19 +22,8 @@ include "basic/admin_header.php";
               <p id='msg' style='color:red'></p>
            </div>
            <div class="row">
-                <!-- <div class="form-group col-md-2">
-                     <input type="checkbox" name='by_title' id='by_title'>
-                    <label class='lbl' for="">By Title<span class='req'> </span></label>
-                </div>
-                <div class="form-group col-md-2">
-                    <input type="checkbox" name='by_year' id='by_year'>
-                    <label class='lbl' for="">By Year<span class='req'> </span></label>
-                </div>
-                 <div class="form-group col-md-2">
-                    <input type="checkbox" name='by_author' id='by_author'>
-                    <label class='lbl' for="">By Author<span class='req'> </span></label>
-                </div> -->
-         </div>
+                
+           </div>
          <div class="row">
             <div class="col-md-12">
                 <label for="">Refference</label>
@@ -45,16 +34,23 @@ include "basic/admin_header.php";
                       $sql = "select * from ref_gen where unique_id='$uniqid'";
                       $stmt = $conn->query($sql);
                       $i=1;
-
                      
+                      $typs[]=array();
                       while(($row=$stmt->fetchAssociative())!==false){
                          extract($row);
-                         $articles[] =$title; 
+                          
+                         $articles[] =$title;
+                         if($row['type']=="OTHERS"){
+                          ?>
+                           <p style='color:purple' >[<?=$i?>]. <?=$reffrence?> </p>
+                         <?php
+                         }
+                         else{
 
-                         if($is_original=="YES"){
+                          if($is_original=="YES"){
                             if($duplication==""){
                             ?>
-                          <p style='color:green' >[<?=$i?>]. <?=$reffrence?></p>
+                          <p style='color:green' >[<?=$i?>]. <?=$reffrence?> </p>
                             <?php
                             }
                             else{
@@ -68,6 +64,13 @@ include "basic/admin_header.php";
                            <p style='color:red'>[<?=$i?>].<?=$reffrence?></p>
                           <?php
                          }
+
+
+                         }
+
+                       
+
+
                         $i=$i+1;
                      }
                     }
@@ -87,10 +90,10 @@ include "basic/admin_header.php";
           </div>
           <div class="row">
             <div class="col-md-4">
-             <table cellspacing="0" cellpadding="0" border="0" width="325">
+             <table cellspacing="0" cellpadding="0" border="0" width="100%">
               <tr>
                <td>
-                 <table cellspacing="0" cellpadding="1" border="1" width="300" >
+                 <table cellspacing="0" cellpadding="1" border="1" width="100%" >
                     <tr>
                       <th colspan='2' style='text-align:center'>
                           Year wise Paper
@@ -105,16 +108,16 @@ include "basic/admin_header.php";
              </tr>
              <tr>
               <td>
-                <div style="width:320px; height:200px; overflow:auto;">
-                  <table cellspacing="0" cellpadding="1" border="1" width="300" >
+                <div style="width:100%; height:200px; overflow:auto;">
+                  <table cellspacing="0" cellpadding="1" border="1" width="100%" >
                         <?php
-                                  $sql = "select year,count(*) as count from ref_gen where unique_id='$uniqid' group by year";
+                                  $sql = "select type,year,count(*) as count from ref_gen where unique_id='$uniqid' group by year";
                                   $stmt = $conn->query($sql);
                                   while(($row=$stmt->fetchAssociative())!==false){
                                     extract($row);
                                   ?>
                                   <tr>
-                                      <td style='text-align:center'><?=$year?></td>
+                                      <td style='text-align:center'><?=($year!="")?$year:"Not Found"?></td>
                                       <td style='text-align:center'><?=$count?></td>
                                     </tr>
                                   <?php
@@ -126,15 +129,18 @@ include "basic/admin_header.php";
                 </tr>
               </table>
        </div>
-       <div class="col-md-6">
-       <table cellspacing="0" cellpadding="0" border="0" width="690">
+       <div class="col-md-8">
+       <table cellspacing="0" cellpadding="0" border="0" width="100%">
        <tr>
             <th colspan='2' style='text-align:center'>
                 Title Duplicacy Check By Position
                 <?php
                 $firstOccurrence = [];
                 $relations = [];
+              
+                $i=0;
                 foreach ($articles as $index => $article) {
+
                   if (!isset($firstOccurrence[$article])) {
                       // First time we see this string, mark its index
                       $firstOccurrence[$article] = $index;
@@ -143,14 +149,17 @@ include "basic/admin_header.php";
                       // String is a duplicate, link to the original
                       $originalIndex = $firstOccurrence[$article];
                       $relations[$originalIndex][] = $index;
+
                   }
+
+                $i=$i+1;
                 }
                 ?>
             </th>
          </tr>
         <tr>
           <td>
-           <table cellspacing="0" cellpadding="1" border="1" width="690" >
+           <table cellspacing="0" cellpadding="1" border="1" width="100%" >
               <tr style="color:white;background-color:grey">
                   <th style='text-align:center;width:90%'> Title </th>
                   <th style='text-align:center'>Duplicate</th>
@@ -160,10 +169,11 @@ include "basic/admin_header.php";
         </tr>
        <tr>
         <td>
-         <div style="width:690px; height:200px; overflow:auto;">
-                      <table cellspacing="0" cellpadding="1" border="1" width="690" >
+         <div style="width:100%; height:200px; overflow:auto;">
+                      <table cellspacing="0" cellpadding="1" border="1" width="100%" >
                         <?php
                         foreach ($relations as $originalIndex => $duplicates) {
+                         
                          $right_position =$originalIndex+1;
                          $original=($right_position).":".$articles[$originalIndex];
                         ?>
@@ -173,8 +183,10 @@ include "basic/admin_header.php";
                           <?php
                           if (!empty($duplicates)) {
                             foreach ($duplicates as $duplicateIndex) {
-                              $rightduplicate=$duplicateIndex+1;
-                               echo "<b style='color:red'>$rightduplicate,</b>";  
+                               
+                               $rightduplicate=$duplicateIndex+1;
+                               echo "<b style='color:red'>$rightduplicate,</b>"; 
+
                             }
                           }
                           else{
@@ -195,8 +207,8 @@ include "basic/admin_header.php";
        </div>
     </div> 
     <div class="row" style='margin-top:10px'>
-      <div class="col-md-12">
-      <table cellspacing="0" cellpadding="0" border="0" width="100%">
+     <div class="col-md-6">
+       <table cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
           <td>
            <table cellspacing="0" cellpadding="1" border="1" width="100%" >
@@ -222,6 +234,57 @@ include "basic/admin_header.php";
                           <tr>
                             <td style='text-align:left;padding-left:10px;width:70%'><?=$journal_name?></td>
                             <td style='text-align:center'><?=$no_reff?></td>
+                          </tr>
+                        <?php
+                         }
+                        ?>
+                      </table>  
+                    </div>
+                  </td>
+                </tr>
+            </table>
+      </div>
+      <div class="col-md-6">
+       <table cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+          <td>
+           <table cellspacing="0" cellpadding="1" border="1" width="100%" >
+              <tr style="color:white;background-color:grey">
+                  <th style='text-align:center;width:70%'>Author Names </th>
+                  <th style='text-align:center'>Reffrence</th>
+              </tr>
+            </table>
+          </td>
+        </tr>
+       <tr>
+        <td>
+         <div style="width:100%; height:200px; overflow:auto;">
+                      <table cellspacing="0" cellpadding="1" border="1" width="100%" >
+                        <?php
+                          $uniqid=$_SESSION['uniqid'];
+                          $sql2="SELECT * from gen_authors where uniqid='$uniqid'";
+                          $stmt = $conn->query($sql2);
+                          $i2=1;
+                          while(($row=$stmt->fetchAssociative())!==false){
+                            extract($row);
+                        ?>
+                          <tr>
+                            <td style='text-align:left;padding-left:10px;width:70%'><?=$author_name?></td>
+                            <td style='text-align:center'>
+                                   <?php
+                                    $autho_id=$row['gen_authors_id'];
+                                    $q5="select refa.*,ref.position from ref_gen_author refa 
+                                    LEFT JOIN  ref_gen ref ON refa.ref_gen_id=ref.ref_gen_id WHERE refa.gen_authors_id='$autho_id' and ref.unique_id='$uniqid'";
+                                    $ath_="";
+                                    $stmt5 = $conn->query($q5);
+                                    while(($row6=$stmt5->fetchAssociative())!==false){
+                                      extract($row6);
+                                      $po=$position+1;
+                                      $ath_.=$po.",";
+                                    }
+                                    echo $ath_;
+                                  ?>
+                            </td>
                           </tr>
                         <?php
                          }

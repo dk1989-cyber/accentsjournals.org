@@ -1,34 +1,32 @@
 <?php
 use Doctrine\DBAL\DriverManager;
-$connectionParams = [
-    'dbname' => 'adxy_accent',
-    'user' => 'adxy_accent',
-    'password' => '-N,3g]8?RFxl',
-    'host' => 'localhost',
-    'driver' => 'pdo_mysql',
-];
-
-
 // $connectionParams = [
-//     'dbname' => 'accent',
-//     'user' => 'root',
-//     'password' => '',
+//     'dbname' => 'adxy_accent',
+//     'user' => 'adxy_accent',
+//     'password' => '-N,3g]8?RFxl',
 //     'host' => 'localhost',
 //     'driver' => 'pdo_mysql',
 // ];
+
+
+$connectionParams = [
+    'dbname' => 'accent',
+    'user' => 'root',
+    'password' => '',
+    'host' => 'localhost',
+    'driver' => 'pdo_mysql',
+];
 
  
 
 
 $conn = DriverManager::getConnection($connectionParams);
-  define("BURL","https://adxy.info/");
-//define("BURL","http://localhost/accentjournals.org/");
+//  define("BURL","https://adxy.info/");
+define("BURL","http://localhost/accentjournal.org/");
 
 function base_url($str){
     return BURL."$str";
 }
-
-
 
 
 

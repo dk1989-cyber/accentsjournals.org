@@ -16,23 +16,58 @@ if(!isset($_SESSION["uniqid"])){
 else{
   $uniqid = $_SESSION["uniqid"];
   $conn->delete('ref_gen', ['unique_id' => $uniqid]);
+  $conn->delete('ref_gen_author_id', ['unique_id' => $uniqid]);
 }
 $articles=array();
+$i=1;
 foreach($substrings as $s){
   if(!is_numeric($s)){
       $ref_data=check_type_data($s);
+     // print_r($ref_data);
+      
       $payload=array(
         "unique_id"=>$uniqid,
         "journal_name"=>$ref_data["journal"],
-        "title"=>trim($ref_data["title"]),
         "type"=>trim($ref_data["type"]),
         "year"=>trim($ref_data["year"]),
         "authors"=>$ref_data["authors"],
         "reffrence"=>$s,
         "position"=>$k
       );
+
+
+      if($ref_data["type"]!="OTHERS"){
+        $payload["title"]=trim($ref_data["title"]);
+      }
+      else{
+        $payload["title"]="Un identified Refference $i";
+        $i=$i+1;
+      }
+
       $articles[] =strtolower($ref_data["title"]); 
       $conn->insert('ref_gen',$payload);
+      $ref_gen_id=$conn->lastInsertId();  
+      
+      if($ref_data["authors"]!=""){
+        $auths=explode(",",$ref_data["authors"]);
+        foreach($auths as $ath ){
+          $ath=trim($ath);
+          if($ath!=="et al"){
+              $q2="select * from gen_authors where author_name='$ath'";
+              $stmt = $conn->query($q2);
+              $row2=$stmt->fetchAssociative();
+              if(!empty($row2)){
+                $a_data=array("gen_authors_id"=>$row2['gen_authors_id'],"uniqid"=>$uniqid,"ref_gen_id"=>$ref_gen_id);
+                $conn->insert('ref_gen_author',$a_data);
+              }
+              else{
+                $a_data=array("author_name"=>$ath,"uniqid"=>$uniqid);
+                $conn->insert('gen_authors',$a_data);
+              }
+           }
+        }
+      }
+
       $k=$k+1;
   } 
 }
@@ -99,50 +134,105 @@ function check_type_data($s){
                   $data["type"]="JOURNAL";
              }
              else if(is_numeric($exp_sub[1])){
-                $author_list=$e[0];
-                $title=$e[1];
-                $journal_name=$e[2];
-                $year=$exp_sub[1];
-                $data["journal"]=$journal_name;
-                $data["title"]=$title;
-                $data["year"]=$year;
-                $data["authors"]=$author_list;
-                $data["type"]="BOOK";
+                if(str_contains($e[2],";")){ 
+                      $author_list=$e[0];
+                      $title=$e[1];
+                      $journal_name=explode(";",$e[2])[0];
+                      $year=$exp_sub[1];
+                      $data["journal"]=$journal_name;
+                      $data["title"]=$title;
+                      $data["year"]=$year;
+                      $data["authors"]=$author_list;
+                      $data["type"]="BOOK";
+                  }
+                 else{
+                    $data["type"]="OTHER";
+                }
              }
+             else{
+              $cn=count($exp_sub)-1;
+              $author_list=$e[0];
+              $remove_year=array_pop($exp_sub);
+              $journal_name=explode(";",$e[2])[0];
+              $year=json_encode($exp_sub);
+              $data["journal"]=$journal_name;
+              $data["title"]=$e[1];
+              $data["year"]=$remove_year;
+              $data["authors"]=$author_list;
+              $data["type"]="BOOK";
+             }
+            //  else if(is_numeric($exp_sub[1])){
+            
+            //  }
        }
        else if($exp_sub[0]==""){
-        if(is_numeric($exp_sub[1])){
+            if(is_numeric($exp_sub[1])){
+              if(str_contains($e[2],";")){ 
+                $author_list=$e[0];
+                $title=$e[1];
+                $journal_name=explode($e[2],";")[0];
+                $data["journal"]=$journal_name;
+                $data["title"]=$title;
+                $data["year"]=$exp_sub[1];
+                $data["authors"]=$author_list;
+                $data["type"]="BOOK";
+              }
+              else{
+                $data["type"]="OTHER";
+              }
+            }
+       }
+  }
+  else if(is_numeric($e[$index])){
+
+       if(count($e)>4){
           $author_list=$e[0];
           $title=$e[1];
           $journal_name=$e[2];
           $data["journal"]=$journal_name;
-          $data["title"]=$title;
-          $data["year"]=$exp_sub[1];
           $data["authors"]=$author_list;
-          $data["type"]="BOOK";
-        }
+          $data["type"]="JOURNAL";
+          $data["title"]=$title;
+          $data["year"]=$e[$index];
+       }
+       else{
+
+          $author_list=$e[0];
+          $title=$e[1];
+          $journal_name=$e[2];
+          $data["journal"]="Not Found";
+          $data["authors"]=$author_list;
+          $data["type"]="JOURNAL";
+          $data["title"]=$title;
+          $data["year"]=$e[$index];
+
        }
   }
-  else if(is_numeric($e[$index])){
-    $author_list=$e[0];
-    $title=$e[1];
-    $journal_name=$e[2];
-    $data["journal"]=$journal_name;
-    $data["authors"]=$author_list;
-    $data["type"]="JOURNAL";
-    $data["title"]=$title;
-    $data["year"]=$e[$index];
-  }
   else if(str_contains($e[$index],":")){
-    $y=explode(":",$e[$index]);
-    $author_list=$e[0];
-    $title=$e[1];
-    $journal_name=$e[2];
-    $data["journal"]=$journal_name;
-    $data["authors"]=$author_list;
-    $data["year"]=$y[0];
-    $data["title"]=$title;
-    $data["type"]="JOURNAL";
+       if(str_contains($s,"(pp.")){
+            $author_list=$e[0];
+            $title=$e[1];
+            $journal_name=$e[2];
+            $data["title"]=$title;
+            $j=str_replace("(pp","",$journal_name);
+            $jour=substr($j,0,strlen($j)-5);
+            $year=substr($j,-5);
+            $data["year"]=$year;
+            $data["journal"]=$jour;
+            $data["authors"]=$author_list;
+            $data["type"]="CONFERENCE";
+        }
+        else{
+            $y=explode(":",$e[$index]);
+            $author_list=$e[0];
+            $title=$e[1];
+            $journal_name=$e[2];
+            $data["journal"]=$journal_name;
+            $data["authors"]=$author_list;
+            $data["year"]=$y[0];
+            $data["title"]=$title;
+            $data["type"]="JOURNAL";
+        }
   }
   else if(str_contains($s,"(pp.")){
     $author_list=$e[0];
@@ -150,28 +240,30 @@ function check_type_data($s){
     $journal_name=$e[2];
     $data["title"]=$title;
     $j=str_replace("(pp","",$journal_name);
-   
     $jour=substr($j,0,strlen($j)-5);
     $year=substr($j,-5);
-  
     $data["year"]=$year;
     $data["journal"]=$jour;
     $data["authors"]=$author_list;
     $data["type"]="CONFERENCE";
    
   }
-  else if(str_contains($s,"www")){
+  else if(str_contains($s,"Accessed")){
     $cont=explode("Accessed",$s);
     $y=explode(" ",$cont[1]);
     $data["type"]="WEBSITE";
     $data["title"]=$cont[0];
+    $data["journal"]="WEBSITE";
     $data["year"]=str_replace(".","",$y[3]);
   }
 
+  else{
+    $data["type"]="OTHERS";
+  }
+
   return $data;
- 
 }
 
-header("refresh:0;url='../view/refference_check.php");
+//header("refresh:0;url='../view/refference_check.php");
 
 ?>
