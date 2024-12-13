@@ -16,7 +16,8 @@ if(!isset($_SESSION["uniqid"])){
 else{
   $uniqid = $_SESSION["uniqid"];
   $conn->delete('ref_gen', ['unique_id' => $uniqid]);
-  $conn->delete('ref_gen_author_id', ['unique_id' => $uniqid]);
+  $conn->delete('ref_gen_author', ['uniqid' => $uniqid]);
+  
 }
 $articles=array();
 $i=1;
@@ -29,7 +30,7 @@ foreach($substrings as $s){
         "unique_id"=>$uniqid,
         "journal_name"=>$ref_data["journal"],
         "type"=>trim($ref_data["type"]),
-        "year"=>trim($ref_data["year"]),
+        "year"=>trim(str_replace("&nbsp;","",$ref_data["year"])),
         "authors"=>$ref_data["authors"],
         "reffrence"=>$s,
         "position"=>$k
@@ -63,6 +64,9 @@ foreach($substrings as $s){
               else{
                 $a_data=array("author_name"=>$ath,"uniqid"=>$uniqid);
                 $conn->insert('gen_authors',$a_data);
+                $lid=$conn->lastInsertId();  
+                $a_data2=array("gen_authors_id"=>$lid,"uniqid"=>$uniqid,"ref_gen_id"=>$ref_gen_id);
+                $conn->insert('ref_gen_author',$a_data2);  
               }
            }
         }

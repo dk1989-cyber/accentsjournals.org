@@ -1,12 +1,11 @@
 <?php
 include "basic/admin_header.php";
+
 ?>
 
 
 <div class="mainpanel">
-
 <div class="contentpanel">
-
   <ol class="breadcrumb breadcrumb-quirk">
     <li><a href="" ><i class="fa fa-home mr5"></i>Refference Check</a></li>
   </ol>
@@ -263,6 +262,7 @@ include "basic/admin_header.php";
                         <?php
                           $uniqid=$_SESSION['uniqid'];
                           $sql2="SELECT * from gen_authors where uniqid='$uniqid'";
+                         
                           $stmt = $conn->query($sql2);
                           $i2=1;
                           while(($row=$stmt->fetchAssociative())!==false){
@@ -340,10 +340,14 @@ include "basic/admin_header.php";
        <div class="row">
            <div class="col-md-12" style='margin-top:10px'>
                <button id='btn'    class='btn btn-info'>Submit</button>
+              
                <?php
                 if(isset($_SESSION["uniqid"])){
                ?>
-                 <button id='btn' type='button'  onclick="clear_ref_session();"  class='btn btn-danger'>Clear <?=$_SESSION["uniqid"]?></button>
+              
+                <a target="_blank"  href="<?=base_url('admin/application/view/gen_ref_report_pdf.php')?>"  class='btn btn-success'>Report</a>
+                 <!-- <button id='btn' type='button'  onclick="clear_ref_session();"  class='btn btn-danger'>Clear <?=$_SESSION["uniqid"]?></button> -->
+                 <a id='btn'  onclick="clear_ref_session();"   class='btn btn-danger'>Clear</a>
                <?php
                 }
                ?>
@@ -383,7 +387,7 @@ function clear_ref_session(){
    if(confirm('are you sure')){
       var burl="../action/clearRefsession.php";
         $.post(burl,{},function(data,status){
-          window.location.reload();
+        window.location.reload();
       });
    }
 } 

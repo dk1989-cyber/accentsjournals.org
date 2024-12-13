@@ -1,56 +1,62 @@
-
-<div class="mainpanel">
-<div class="contentpanel">
-  <ol class="breadcrumb breadcrumb-quirk">
-    <li><a href="" ><i class="fa fa-home mr5"></i>Refference Check</a></li>
-  </ol>
-  <div class="row"> 
-    <div class="col-sm-12">
-      <div class="panel">
-        <div class="panel-heading" style='background-color:#259dab'>
-          <h4 class="panel-title" style='color:White'>Refference Check</h4>
-        </div>
-        <form onsubmit=validation(); id='accentform' action="../action/actionReffrenceCheck.php" method='post'  enctype='multipart/form-data'>
-        <div class="panel-body" style='margin-top:10px'>
-           <div class="col-md-12">
-              <p id='msg' style='color:red'></p>
-           </div>
-           <div class="row">
-               
-         </div>
-        
-         <?php
-         
+     <?php
+         session_start();
+         require_once '../../../vendor/autoload.php';
+         require_once "../../../config/config.php";
           if(isset($_SESSION["uniqid"])){
             $uniqid=$_SESSION["uniqid"];
-         ?>
-         <div class="row">
-              <div class="col-md-12">
-                   <h4>Reports</h4>
-              </div>
-          </div>
-          <div class="row">
-            <div class="col-md-4">
-             <table cellspacing="0" cellpadding="0" border="0" width="100%">
-              <tr>
-               <td>
-                 <table cellspacing="0" cellpadding="1" border="1" width="100%" >
-                    <tr>
-                      <th colspan='2' style='text-align:center'>
-                          Year wise Paper
-                      </th>
-                    </tr>
-                    <tr style="color:white;background-color:grey">
-                        <th style='width:70%;text-align:center'>Year</th>
-                        <th>No of Paper</th>
-                    </tr>
-              </table>
-              </td>
-             </tr>
-             <tr>
-              <td>
-                <div style="width:100%; height:200px; overflow:auto;">
+             ?>
+              <?php
+                     if(isset($_SESSION["uniqid"])){
+                      $uniqid=$_SESSION["uniqid"];
+                      $sql = "select * from ref_gen where unique_id='$uniqid'";
+                      $stmt = $conn->query($sql);
+                      $i=1;
+                     
+                      $typs[]=array();
+                      while(($row=$stmt->fetchAssociative())!==false){
+                         extract($row);
+                          
+                         $articles[] =$title;
+                         if($row['type']=="OTHERS"){
+                          ?>
+                           <p style='color:purple' >[<?=$i?>]. <?=$reffrence?> </p>
+                         <?php
+                         }
+                         else{
+
+                          if($is_original=="YES"){
+                            if($duplication==""){
+                            ?>
+                          <p style='color:green' >[<?=$i?>]. <?=$reffrence?> </p>
+                            <?php
+                            }
+                            else{
+                           ?>
+                              <p  style='color:orange'>[<?=$i?>]. <?=$reffrence?></p>
+                           <?php
+                            }
+                         }
+                         else{
+                          ?>
+                           <p style='color:red'>[<?=$i?>].<?=$reffrence?></p>
+                          <?php
+                         }
+                         }
+                        $i=$i+1;
+                     }
+                    }
+                     ?>
+        
                   <table cellspacing="0" cellpadding="1" border="1" width="100%" >
+                    <tr>
+                        <th colspan='2' style='text-align:center'>
+                            Year wise Paper
+                        </th>
+                      </tr>
+                      <tr style="color:white;background-color:grey">
+                          <th style='width:70%;text-align:center'>Year</th>
+                          <th>No of Paper</th>
+                      </tr>
                         <?php
                                   $sql = "select type,year,count(*) as count from ref_gen where unique_id='$uniqid' group by year";
                                   $stmt = $conn->query($sql);
@@ -64,57 +70,34 @@
                                   <?php
                                   }
                                 ?>   
-                      </table>  
-                     </div>
-                  </td>
-                </tr>
-              </table>
-       </div>
-       <div class="col-md-8">
-       <table cellspacing="0" cellpadding="0" border="0" width="100%">
-       <tr>
-            <th colspan='2' style='text-align:center'>
-                Title Duplicacy Check By Position
-                <?php
-                $firstOccurrence = [];
-                $relations = [];
-              
-                $i=0;
-                foreach ($articles as $index => $article) {
-
-                  if (!isset($firstOccurrence[$article])) {
-                      // First time we see this string, mark its index
-                      $firstOccurrence[$article] = $index;
-                      $relations[$index] = []; // Initialize an empty array for relations
-                  } else {
-                      // String is a duplicate, link to the original
-                      $originalIndex = $firstOccurrence[$article];
-                      $relations[$originalIndex][] = $index;
-
-                  }
-
-                $i=$i+1;
-                }
-                ?>
-            </th>
-         </tr>
-        <tr>
-          <td>
+           </table>            
            <table cellspacing="0" cellpadding="1" border="1" width="100%" >
               <tr style="color:white;background-color:grey">
                   <th style='text-align:center;width:90%'> Title </th>
                   <th style='text-align:center'>Duplicate</th>
               </tr>
-            </table>
-          </td>
-        </tr>
-       <tr>
-        <td>
-         <div style="width:100%; height:200px; overflow:auto;">
-                      <table cellspacing="0" cellpadding="1" border="1" width="100%" >
-                        <?php
-                        foreach ($relations as $originalIndex => $duplicates) {
-                         
+              <?php
+                      $firstOccurrence = [];
+                      $relations = [];
+
+                      $i=0;
+                      foreach ($articles as $index => $article) {
+
+                        if (!isset($firstOccurrence[$article])) {
+                            // First time we see this string, mark its index
+                            $firstOccurrence[$article] = $index;
+                            $relations[$index] = []; // Initialize an empty array for relations
+                        } else {
+                            // String is a duplicate, link to the original
+                            $originalIndex = $firstOccurrence[$article];
+                            $relations[$originalIndex][] = $index;
+
+                        }
+
+                      $i=$i+1;
+                      }
+                    
+                        foreach ($relations as $originalIndex => $duplicates) {           
                          $right_position =$originalIndex+1;
                          $original=($right_position).":".$articles[$originalIndex];
                         ?>
@@ -140,30 +123,12 @@
                         <?php
                          }
                         ?>
-                      </table>  
-                    </div>
-                  </td>
-                </tr>
-              </table>
-       </div>
-    </div> 
-    <div class="row" style='margin-top:10px'>
-     <div class="col-md-6">
-       <table cellspacing="0" cellpadding="0" border="0" width="100%">
-        <tr>
-          <td>
-           <table cellspacing="0" cellpadding="1" border="1" width="100%" >
-              <tr style="color:white;background-color:grey">
-                  <th style='text-align:center;width:70%'> Journal </th>
-                  <th style='text-align:center'>No of Reffrence</th>
-              </tr>
             </table>
-          </td>
-        </tr>
-       <tr>
-        <td>
-         <div style="width:100%; height:200px; overflow:auto;">
-                      <table cellspacing="0" cellpadding="1" border="1" width="100%" >
+               <table cellspacing="0" cellpadding="1" border="1" width="100%" style="margin-top:10px" >
+                      <tr style="color:white;background-color:grey">
+                            <th style='text-align:center;width:70%'> Journal </th>
+                            <th style='text-align:center'>No of Reffrence</th>
+                      </tr>
                         <?php
                           $uniqid=$_SESSION['uniqid'];
                           $sql2="SELECT COUNT(*) as no_reff,journal_name from ref_gen where unique_id='$uniqid' and journal_name!='' GROUP by Journal_name";
@@ -179,28 +144,14 @@
                         <?php
                          }
                         ?>
-                      </table>  
-                    </div>
-                  </td>
-                </tr>
-            </table>
-      </div>
-      <div class="col-md-6">
-       <table cellspacing="0" cellpadding="0" border="0" width="100%">
-        <tr>
-          <td>
-           <table cellspacing="0" cellpadding="1" border="1" width="100%" >
-              <tr style="color:white;background-color:grey">
-                  <th style='text-align:center;width:70%'>Author Names </th>
-                  <th style='text-align:center'>Reffrence</th>
-              </tr>
-            </table>
-          </td>
-        </tr>
-       <tr>
-        <td>
-         <div style="width:100%; height:200px; overflow:auto;">
-                      <table cellspacing="0" cellpadding="1" border="1" width="100%" >
+                 </table>   
+
+
+                <table cellspacing="0" cellpadding="1" border="1" width="100%"  style='margin-top:10px'>
+                     <tr style="color:white;background-color:grey">
+                        <th style='text-align:center;width:70%'>Author Names </th>
+                        <th style='text-align:center'>Reffrence</th>
+                      </tr>
                         <?php
                           $uniqid=$_SESSION['uniqid'];
                           $sql2="SELECT * from gen_authors where uniqid='$uniqid'";
@@ -209,6 +160,7 @@
                           while(($row=$stmt->fetchAssociative())!==false){
                             extract($row);
                         ?>
+                        
                           <tr>
                             <td style='text-align:left;padding-left:10px;width:70%'><?=$author_name?></td>
                             <td style='text-align:center'>
@@ -230,17 +182,9 @@
                         <?php
                          }
                         ?>
-                      </table>  
-                    </div>
-                  </td>
-                </tr>
-            </table>
-      </div>
-    </div>
-    <div class="row" style='margin-top:20px'>
-            <div class="col-md-12">
-            <div class="table-responsive">
-             <table  id="dataTable1" class="table table-bordered table-striped-col">
+            </table>  
+                   
+          <table  border="1" style='margin-top:10px'>
               <thead>
                 <tr>     
                     <th>Srno</th>
@@ -268,36 +212,10 @@
                 ?>
              </tbody> 
           </table>
-       </div>
-    </div>          
+               
    <?php
    }
     ?>
-      <div class="row">
-        <div class="col-md-12">
-             <hr>
-        </div>
-      </div>
-       <div class="row">
-           <div class="col-md-12" style='margin-top:10px'>
-               <button id='btn'    class='btn btn-info'>Submit</button>
-               <?php
-                if(isset($_SESSION["uniqid"])){
-               ?>
-                 <button id='btn' type='button'  onclick="clear_ref_session();"  class='btn btn-danger'>Clear <?=$_SESSION["uniqid"]?></button>
-               <?php
-                }
-               ?>
-           </div>
-       </div> 
-      </div>
-    </div><!-- panel -->
-    </form>
-    </div><!-- col-sm-6 -->
-    <!-- ####################################################### -->
-  </div><!-- row -->
-</div><!-- contentpanel -->
-</div><!-- mainpanel -->
-</section>
- 
+    
+      
  
